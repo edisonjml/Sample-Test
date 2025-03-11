@@ -22,16 +22,26 @@ public class TestController {
 	public ResponseEntity<Object> addCustomerAccount(@RequestBody Customer customer, HttpServletRequest request){
 		
 		Map<String, Object> transactionResponse = new HashMap<>();
-		customer.setCustomerNumber(count++);
 		
-		if(customers.add(customer)) {
+		//Validate if required fields are empty
+		boolean missingRequiredFields = false;
+		missingRequiredFields = customer.getCustomerName().isBlank()
+				|| customer.getCustomerMobile().isBlank()
+				|| customer.getCustomerEmail().isBlank()
+				|| customer.getAddress1().isBlank();
+		
+		if(!missingRequiredFields) {
+			//Set the customer number based on integer incrementing from zero
+			customer.setCustomerNumber(count++);
+			
+			customers.add(customer);
 			transactionResponse.put("customerNumber", customer.getCustomerNumber());
-			transactionResponse.put("transactionStatusCode", HttpStatus.OK.toString().substring(0, 3));
+			transactionResponse.put("transactionStatusCode", Integer.parseInt(HttpStatus.CREATED.toString().substring(0, 3)));
 			transactionResponse.put("transactionStatusDescription", "Customer account created");
-			return new ResponseEntity<>(transactionResponse, HttpStatus.OK);
+			return new ResponseEntity<>(transactionResponse, HttpStatus.CREATED);
 		} else {
-			transactionResponse.put("transactionStatusCode", HttpStatus.UNAUTHORIZED.toString().substring(0, 3));
-			transactionResponse.put("transactionStatusDescription", "Email is required field");
+			transactionResponse.put("transactionStatusCode", Integer.parseInt(HttpStatus.BAD_REQUEST.toString().substring(0, 3)));
+			transactionResponse.put("transactionStatusDescription", "Please fill out all the required fields");
 			return new ResponseEntity<>(transactionResponse, HttpStatus.BAD_REQUEST);
 		}
 	}
@@ -41,6 +51,7 @@ public class TestController {
 		
 		Map<String, Object> transactionResponse = new HashMap<>();
 		
+		//Finds the customer based on the customer number
 		boolean isFound = false;
 		for(Customer customer : customers) {
 			isFound = customer.getCustomerNumber() == customerNumber;
@@ -49,14 +60,15 @@ public class TestController {
 				break;
 			}
 		}
+		
 		if(isFound) {
-			transactionResponse.put("transactionStatusCode", HttpStatus.OK.toString().substring(0, 3));
+			transactionResponse.put("transactionStatusCode", Integer.parseInt(HttpStatus.FOUND.toString().substring(0, 3)));
 			transactionResponse.put("transactionStatusDescription", "Customer Account Found");
-			return new ResponseEntity<>(transactionResponse, HttpStatus.OK);
+			return new ResponseEntity<>(transactionResponse, HttpStatus.FOUND);
 		} else {
-			transactionResponse.put("transactionStatusCode", HttpStatus.UNAUTHORIZED.toString().substring(0, 3));
+			transactionResponse.put("transactionStatusCode", Integer.parseInt(HttpStatus.NOT_FOUND.toString().substring(0, 3)));
 			transactionResponse.put("transactionStatusDescription", "Customer not Found");
-			return new ResponseEntity<>(transactionResponse, HttpStatus.UNAUTHORIZED);
+			return new ResponseEntity<>(transactionResponse, HttpStatus.NOT_FOUND);
 		}
 	}
 	
@@ -69,7 +81,6 @@ public class TestController {
 		        map.put(field.getName(), field.get(object));
 		    }
 		} catch (IllegalArgumentException | IllegalAccessException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 
